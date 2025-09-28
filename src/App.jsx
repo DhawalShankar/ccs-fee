@@ -274,68 +274,9 @@ export default function SchoolFeeDashboard() {
       setErrors({ payment: 'Payment gateway not loaded. Please refresh and try again.' });
     }
   };
-
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
-    
-    setIsProcessing(true);
-    setErrors({});
-    
-    try {
-      // Create Razorpay order
-      const orderData = await createRazorpayOrder();
-      
-      // Initialize Razorpay payment
-      initializeRazorpayPayment(orderData);
-      
-    } catch (error) {
-      setIsProcessing(false);
-      setErrors({ payment: 'Failed to initiate payment. Please try again.' });
-    }
-  };
-
-  const isFormValid = formData.studentName && formData.class && formData.amount && formData.month;
-
-  if (showSuccess) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
-          <div className="absolute top-40 right-20 w-48 h-48 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full blur-xl opacity-30 animate-bounce"></div>
-          <div className="absolute bottom-20 left-1/4 w-40 h-40 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full blur-xl opacity-25 animate-ping"></div>
-          <div className="absolute bottom-40 right-1/3 w-36 h-36 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full blur-xl opacity-20 animate-pulse delay-1000"></div>
-        </div>
-
-        <div className="relative z-10 bg-white/10 backdrop-blur-lg rounded-3xl p-8 md:p-12 shadow-2xl text-center max-w-lg w-full border border-white/20">
-          <div className="w-24 h-24 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
-            <div className="text-5xl">🎉</div>
-          </div>
-          <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-            Hooray! Payment Complete!
-          </h2>
-          <p className="text-gray-200 text-xl mb-6">Your school fee has been paid successfully!</p>
-          
-          {paymentDetails && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-white/20">
-              <p className="text-green-300 font-semibold text-sm mb-1">
-                💳 Payment ID: {paymentDetails.paymentId.slice(-8)}
-              </p>
-              <p className="text-green-300 font-semibold text-sm">
-                📋 Order ID: {paymentDetails.orderId.slice(-8)}
-              </p>
-            </div>
-          )}
-          
-          <div className="flex justify-center space-x-4 text-4xl">
-            <span className="animate-bounce">⭐</span>
-            <span className="animate-bounce delay-100">🌟</span>
-            <span className="animate-bounce delay-200">✨</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+const handlePayment = () => {
+  window.open("https://pages.razorpay.com/pl_RMuEpNshlRNVz1/view", "_blank");
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative overflow-hidden">
@@ -526,28 +467,14 @@ export default function SchoolFeeDashboard() {
                   </div>
 
                   {/* Submit Button */}
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!isFormValid || isProcessing}
-                    className={`w-full py-6 px-8 rounded-2xl font-black text-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl flex items-center justify-center border-2 ${
-                      isFormValid && !isProcessing
-                        ? 'bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 text-white border-yellow-400 hover:shadow-yellow-500/50 hover:animate-pulse'
-                        : 'bg-gray-600/50 text-gray-400 cursor-not-allowed border-gray-600'
-                    }`}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin mr-4"></div>
-                        Opening Payment Gateway...
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-3xl mr-3 ">🚀</span>
-                        Pay Securely with Razorpay
-                        <span className="text-3xl ml-3">✨</span>
-                      </>
-                    )}
-                  </button>
+
+<button
+  onClick={handlePayment}
+  className="w-full py-6 px-8 rounded-2xl font-black text-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 text-white"
+>
+  🚀 Pay Securely with Razorpay ✨
+</button>
+
                 </div>
               </div>
             </div>
