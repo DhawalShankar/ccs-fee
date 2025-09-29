@@ -5,31 +5,14 @@ export default function SchoolFeeDashboard() {
     studentName: '',
     class: '',
     amount: '',
-    month: '',
-    paymentMethod: 'card'
+    month: ''
   });
   
   const [isAnimated, setIsAnimated] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState({});
-  const [paymentDetails, setPaymentDetails] = useState(null);
 
   useEffect(() => {
     setIsAnimated(true);
-    
-    // Load Razorpay script
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup script on unmount
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
   }, []);
 
   const classes = [
@@ -58,7 +41,6 @@ export default function SchoolFeeDashboard() {
       [name]: value
     }));
     
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -78,205 +60,11 @@ export default function SchoolFeeDashboard() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const createRazorpayOrder = async () => {
-    try {
-      // DEMO MODE: Check if backend is available
-      const isDemoMode = !process.env.REACT_APP_RAZORPAY_KEY_ID || 
-                        process.env.REACT_APP_RAZORPAY_KEY_ID === 'your_test_key_id_here';
-      
-      if (isDemoMode) {
-        // Return mock order data for demo
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-        return {
-          id: `order_demo_${Date.now()}`,
-          amount: parseFloat(formData.amount) * 100,
-          currency: 'INR',
-          status: 'created'
-        };
-      }
-      
-      const response = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: parseFloat(formData.amount) * 100, // Convert to paise
-          currency: 'INR',
-          receipt: `fee_${Date.now()}`,
-          notes: {
-            student_name: formData.studentName,
-            class: formData.class,
-            month: formData.month
-          }
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create order');
-      }
-
-      const orderData = await response.json();
-      return orderData;
-    } catch (error) {
-      console.error('Error creating order:', error);
-      throw error;
+  const handlePayment = () => {
+    if (validateForm()) {
+      window.open("https://pages.razorpay.com/pl_RMuEpNshlRNVz1/view", "_blank");
     }
   };
-
-  const handlePaymentSuccess = async (response) => {
-    try {
-      // DEMO MODE: Check if backend is available
-      const isDemoMode = !process.env.REACT_APP_RAZORPAY_KEY_ID || 
-                        process.env.REACT_APP_RAZORPAY_KEY_ID === 'your_test_key_id_here';
-      
-      if (isDemoMode) {
-        // Mock successful verification for demo
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setPaymentDetails({
-          paymentId: response.razorpay_payment_id || `pay_demo_${Date.now()}`,
-          orderId: response.razorpay_order_id || `order_demo_${Date.now()}`,
-          success: true
-        });
-        setIsProcessing(false);
-        setShowSuccess(true);
-
-        // Reset form after 5 seconds
-        setTimeout(() => {
-          setShowSuccess(false);
-          setFormData({
-            studentName: '',
-            class: '',
-            amount: '',
-            month: '',
-            paymentMethod: 'card'
-          });
-          setErrors({});
-          setPaymentDetails(null);
-        }, 5000);
-        return;
-      }
-
-      // Verify payment on backend
-      const verifyResponse = await fetch('/api/verify-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          razorpay_order_id: response.razorpay_order_id,
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_signature: response.razorpay_signature,
-          student_details: formData
-        }),
-      });
-
-      if (verifyResponse.ok) {
-        const verifyData = await verifyResponse.json();
-        setPaymentDetails({
-          paymentId: response.razorpay_payment_id,
-          orderId: response.razorpay_order_id,
-          ...verifyData
-        });
-        setIsProcessing(false);
-        setShowSuccess(true);
-
-        // Reset form after 5 seconds
-        setTimeout(() => {
-          setShowSuccess(false);
-          setFormData({
-            studentName: '',
-            class: '',
-            amount: '',
-            month: '',
-            paymentMethod: 'card'
-          });
-          setErrors({});
-          setPaymentDetails(null);
-        }, 5000);
-      } else {
-        throw new Error('Payment verification failed');
-      }
-    } catch (error) {
-      console.error('Error verifying payment:', error);
-      setIsProcessing(false);
-      setErrors({ payment: 'Payment verification failed. Please contact support.' });
-    }
-  };
-
-  const handlePaymentError = (error) => {
-    console.error('Payment failed:', error);
-    setIsProcessing(false);
-    
-    let errorMessage = 'Payment failed. Please try again.';
-    if (error.description) {
-      errorMessage = error.description;
-    } else if (error.reason) {
-      errorMessage = error.reason;
-    }
-    
-    setErrors({ payment: errorMessage });
-  };
-
-  const initializeRazorpayPayment = (orderData) => {
-    // DEMO MODE: Check if backend is available
-    const isDemoMode = !process.env.REACT_APP_RAZORPAY_KEY_ID || 
-                      process.env.REACT_APP_RAZORPAY_KEY_ID === 'your_test_key_id_here';
-    
-    if (isDemoMode) {
-      // Show demo mode alert and simulate success
-      alert('🎭 DEMO MODE: Real payment gateway नहीं है। Demo success दिखा रहे हैं!');
-      setTimeout(() => {
-        handlePaymentSuccess({
-          razorpay_payment_id: `pay_demo_${Date.now()}`,
-          razorpay_order_id: orderData.id
-        });
-      }, 1000);
-      return;
-    }
-
-    const options = {
-      key: process.env.REACT_APP_RAZORPAY_KEY_ID, // Your Razorpay Key ID
-      amount: orderData.amount,
-      currency: orderData.currency,
-      name: 'Cape Comorin School - CCS',
-      description: `School Fee Payment - ${formData.month}`,
-      image: '/logo192.png', // Add your school logo path
-      order_id: orderData.id,
-      handler: handlePaymentSuccess,
-      prefill: {
-        name: formData.studentName,
-        email: '', // Add parent email if available
-        contact: '' // Add parent contact if available
-      },
-      notes: {
-        student_name: formData.studentName,
-        class: formData.class,
-        month: formData.month
-      },
-      theme: {
-        color: '#f59e0b' // Amber color matching your theme
-      },
-      modal: {
-        ondismiss: () => {
-          setIsProcessing(false);
-          setErrors({ payment: 'Payment cancelled by user' });
-        }
-      }
-    };
-
-    if (window.Razorpay) {
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', handlePaymentError);
-      rzp.open();
-    } else {
-      setIsProcessing(false);
-      setErrors({ payment: 'Payment gateway not loaded. Please refresh and try again.' });
-    }
-  };
-const handlePayment = () => {
-  window.open("https://pages.razorpay.com/pl_RMuEpNshlRNVz1/view", "_blank");
-};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative overflow-hidden">
@@ -328,15 +116,6 @@ const handlePayment = () => {
         </div>
 
         <div className="max-w-screen mx-auto px-4 py-8">
-          {/* Payment Errors */}
-          {errors.payment && (
-            <div className={`mb-6 transition-all duration-500 ${isAnimated ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <div className="bg-red-500/20 backdrop-blur-lg border border-red-400/30 rounded-2xl p-4 text-center">
-                <p className="text-red-200 font-bold">⚠️ {errors.payment}</p>
-              </div>
-            </div>
-          )}
-
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Payment Form */}
             <div className={`lg:col-span-2 transition-all duration-1000 delay-200 ${isAnimated ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
@@ -467,14 +246,12 @@ const handlePayment = () => {
                   </div>
 
                   {/* Submit Button */}
-
-<button
-  onClick={handlePayment}
-  className="w-full py-6 px-8 rounded-2xl font-black text-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 text-white"
->
-  🚀 Pay Securely with Razorpay ✨
-</button>
-
+                  <button
+                    onClick={handlePayment}
+                    className="w-full py-6 px-8 rounded-2xl font-black text-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 text-white shadow-2xl hover:shadow-yellow-500/50 transform hover:scale-105 transition-all duration-300"
+                  >
+                    🚀 Pay Securely with Razorpay ✨
+                  </button>
                 </div>
               </div>
             </div>
